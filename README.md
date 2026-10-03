@@ -8,7 +8,9 @@ DeepSeek Harness plugin that auto-adapts the [OpenCode Console (Zen) model catal
 - CNB package registry: <https://cnb.cool/A42Null/dsh-opencode-zen-plugin>
 - npm package: `@A42Null/dsh-opencode-zen-plugin` (see Install below)
 
-**Paste your OpenCode Console API Key in the plugin settings once — every OpenCode Zen model becomes usable in DSH.** Model list, context windows, endpoint routing, and reasoning parameters are all handled automatically.
+**Paste an OpenCode Console API Key under Settings → Plugins and the Console's chat models become selectable in DSH.** Model list, context windows, endpoint routing, and reasoning parameters are handled automatically.
+
+What it does not do: it cannot make `*-free` models work (they only run inside the OpenCode client), it skips the `jev-*` SystemOne models (not chat-capable), and paid models still require a funded Console account.
 
 ## Features
 
@@ -22,7 +24,7 @@ DeepSeek Harness plugin that auto-adapts the [OpenCode Console (Zen) model catal
 - **Free models hidden by default**: `*-free` belongs to OpenCode's in-client free tier; through the Console API it returns `403 FreeTierError` ("free tier can only be used from within OpenCode"), so it is excluded from the picker unless you opt in
 - **Readable billing/permission errors**: insufficient funds (402), model access disabled (403), and the free-tier gate (403 FreeTierError) map to distinct error codes with actionable advice instead of a blanket "invalid API key"
 - **Reasoning passthrough**: `off` / `minimal` / `low` / `medium` / `high` / `xhigh` / `max`, mapped to each protocol's native field (`reasoning_effort`, `thinking.budget_tokens`, `thinkingConfig.thinkingBudget`, `reasoning.effort`)
-- **Full harness stream protocol**: streamed text / reasoning / tool-call blocks, usage accounting, stop-reason mapping, and error classification (AUTH, QUOTA_EXCEEDED, RATE_LIMIT, SERVER, TIMEOUT, TRANSPORT, CONTEXT_WINDOW_EXCEEDED, ...)
+- **Full harness stream protocol**: streamed text / reasoning / tool-call blocks, usage accounting, stop-reason mapping, and error classification (AUTH, QUOTA, FREE_TIER_BLOCKED, MODEL_ACCESS_DISABLED, RATE_LIMIT, INVALID_REQUEST, SERVER, TIMEOUT, TRANSPORT, CONTEXT_WINDOW_EXCEEDED, EMPTY_RESPONSE)
 - **Tool calls & image input**: vision models (claude- / gemini- / deepseek-v4-flash-vision, ...) accept image attachments
 - **Stream watchdog**: aborts after 120s first-byte / 300s idle to avoid hung requests
 

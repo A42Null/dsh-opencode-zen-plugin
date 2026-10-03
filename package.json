@@ -1,7 +1,7 @@
 {
   "name": "@A42Null/dsh-opencode-zen-plugin",
-  "version": "0.2.5",
-  "description": "OpenCode Console (Zen) models for DeepSeek Harness (DSH): fill your Console API key in settings and every Zen model becomes usable.",
+  "version": "0.2.6",
+  "description": "OpenCode Console (Zen) models for DeepSeek Harness (DSH): fill in your Console API key under Settings → Plugins and the Console's chat models become selectable.",
   "type": "module",
   "main": "lib/index.js",
   "repository": {

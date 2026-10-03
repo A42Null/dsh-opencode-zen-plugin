@@ -8,7 +8,9 @@ DeepSeek Harness 插件：自动适配 [OpenCode Console (Zen) 模型目录](htt
 - CNB 制品库：<https://cnb.cool/A42Null/dsh-opencode-zen-plugin>
 - npm 包名：`@A42Null/dsh-opencode-zen-plugin`（安装方式见下文）
 
-**只需在设置中粘贴 OpenCode Console 的 API Key，全部 OpenCode Zen 模型即可在 DSH 中直接使用** —— 模型列表、上下文窗口、端点路由、推理参数全部自动完成，无需任何额外配置。
+**只需在「设置 → 插件」粘贴 OpenCode Console 的 API Key，即可在 DSH 中选用 Console 提供的对话模型** —— 模型列表、上下文窗口、端点路由、推理参数自动完成。
+
+它不做的事：不能让 `*-free` 免费模型可用（只能在 OpenCode 客户端内运行）；会跳过 `jev-*` SystemOne 模型（不支持对话）；付费模型仍需 Console 账户有余额。
 
 ## 功能特性
 
@@ -22,7 +24,7 @@ DeepSeek Harness 插件：自动适配 [OpenCode Console (Zen) 模型目录](htt
 - **免费模型默认隐藏**：`*-free` 属于 OpenCode 客户端内部的免费层，经 Console API 调用会返回 `403 FreeTierError`（"free tier can only be used from within OpenCode"），因此默认不列入模型列表；需要时可在设置中开启
 - **账务/权限错误可读**：余额不足（402）、模型无访问权限（403 Model access is disabled）、免费层受限（403 FreeTierError）各自映射为独立错误码并附带处理建议，不再笼统显示为"密钥无效"
 - **推理参数透传**：`off` / `minimal` / `low` / `medium` / `high` / `xhigh` / `max` 阶梯，自动映射各协议原生字段（`reasoning_effort`、`thinking.budget_tokens`、`thinkingConfig.thinkingBudget`、`reasoning.effort`）
-- **完整 Harness 流协议**：文本 / 推理 / 工具调用分块流式输出、usage 计费、停止原因映射与错误分类（AUTH、QUOTA_EXCEEDED、RATE_LIMIT、SERVER、TIMEOUT、TRANSPORT、CONTEXT_WINDOW_EXCEEDED 等）
+- **完整 Harness 流协议**：文本 / 推理 / 工具调用分块流式输出、usage 计费、停止原因映射与错误分类（AUTH、QUOTA、FREE_TIER_BLOCKED、MODEL_ACCESS_DISABLED、RATE_LIMIT、INVALID_REQUEST、SERVER、TIMEOUT、TRANSPORT、CONTEXT_WINDOW_EXCEEDED、EMPTY_RESPONSE）
 - **工具调用与图片输入**：vision 模型（claude- / gemini- / deepseek-v4-flash-vision 等）支持图片附件
 - **流看门狗**：120 秒首包 / 300 秒空闲超时自动中止，避免挂死
 
