@@ -1,0 +1,9 @@
+# opencode-zen DSH 插件 — bundle patch: insert the plugin row (deployment-global).
+#
+# 无需编辑任何默认值：插件注册 opencode-zen provider，模型目录自动从
+# https://opencode.ai/zen/v1/models 同步，路由按文档端点表自动适配。
+# 如需覆盖选项，请在下方 config 对象中修改（见 lib/index.js 的 Config schema）。
+- insert:
+    - id: opencode-zen
+      name: '@A42Null/dsh-opencode-zen-plugin'
+      config: {}
