@@ -2,6 +2,10 @@
 
 DeepSeek Harness plugin that auto-adapts the [OpenCode Console (Zen) model catalog](https://opencode.ai/v2/docs/console/models).
 
+- GitHub: <https://github.com/A42Null/dsh-opencode-zen-plugin>
+- CNB package registry: <https://cnb.cool/A42Null/dsh-opencode-zen-plugin>
+- npm package: `@A42Null/dsh-opencode-zen-plugin` (see Install below)
+
 **Paste your OpenCode Console API Key in the plugin settings once — every OpenCode Zen model becomes usable in DSH.** Model list, context windows, endpoint routing, and reasoning parameters are all handled automatically.
 
 ## Features

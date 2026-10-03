@@ -2,6 +2,10 @@
 
 DeepSeek Harness 插件：自动适配 [OpenCode Console (Zen) 模型目录](https://opencode.ai/v2/docs/console/models)。
 
+- GitHub：<https://github.com/A42Null/dsh-opencode-zen-plugin>
+- CNB 制品库：<https://cnb.cool/A42Null/dsh-opencode-zen-plugin>
+- npm 包名：`@A42Null/dsh-opencode-zen-plugin`（安装方式见下文）
+
 **只需在设置中粘贴 OpenCode Console 的 API Key，全部 OpenCode Zen 模型即可在 DSH 中直接使用** —— 模型列表、上下文窗口、端点路由、推理参数全部自动完成，无需任何额外配置。
 
 ## 功能特性
