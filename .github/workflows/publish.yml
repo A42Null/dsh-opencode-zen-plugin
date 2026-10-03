@@ -171,12 +171,17 @@ jobs:
           set -euo pipefail
           name="$(node -p "require('./package.json').name")"
           version="$(node -p "require('./package.json').version")"
-          if npm view "$name@$version" version --registry "$NPM_REGISTRY" >/dev/null 2>&1; then
-            echo "::notice::npmjs 上已存在 $name@$version"
-          else
-            echo "::error::npmjs 上不存在 $name@$version —— 发布未成功"
-            exit 1
-          fi
+          # 刚发布的版本在 npm 上可能处于 "being processed" 状态，需要给它一点时间
+          for attempt in $(seq 1 24); do
+            if npm view "$name@$version" version --registry "$NPM_REGISTRY" >/dev/null 2>&1; then
+              echo "::notice::npmjs 上已存在 $name@$version（第 ${attempt} 次检查）"
+              exit 0
+            fi
+            echo "第 ${attempt} 次检查尚不可见，10 秒后重试..."
+            sleep 10
+          done
+          echo "::error::npmjs 上仍不存在 $name@$version —— 发布未成功"
+          exit 1
 
       - name: Summary
         if: always()
