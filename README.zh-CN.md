@@ -159,9 +159,8 @@ git push origin main --follow-tags
 | Secret 名 | 必填 | 说明 |
 | --- | --- | --- |
 | `CNB_TOKEN` | 是 | CNB 访问令牌（生成时需勾选「制品库」权限） |
-| `NPM_TOKEN` | 否 | **仅作 OIDC 的回退**：Granular token，权限需为 **`Read and write`**（不是 `Read and write (stage only)`）并勾选 **`Bypass 2FA`**。配好 Trusted Publisher 后即可删除 |
 
-CNB 的 npm 用户名固定为 `cnb`（如需不同可改工作流的 `CNB_USERNAME`）。标签版本与 `package.json` 不一致时任务会直接失败，避免发错版本。
+**npmjs 不需要任何密钥**（走 OIDC 可信发布；若 OIDC 失败，任务会打印配置检查清单并失败）。CNB 的 npm 用户名固定为 `cnb`（如需不同可改工作流的 `CNB_USERNAME`）。标签版本与 `package.json` 不一致时任务会直接失败，避免发错版本。
 
 ## 文档
 

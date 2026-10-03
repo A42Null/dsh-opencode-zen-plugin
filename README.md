@@ -159,9 +159,8 @@ CI then exchanges an OIDC token for publish credentials — no token needed (the
 | Secret | Required | Notes |
 | --- | --- | --- |
 | `CNB_TOKEN` | yes | CNB access token (enable the package-registry scope when creating it) |
-| `NPM_TOKEN` | no | **Fallback only, when OIDC is not configured**: a Granular token with **`Read and write`** (not `Read and write (stage only)`) and **`Bypass 2FA`** checked. Delete it once the Trusted Publisher is set up |
 
-The CNB npm username is always `cnb` (change `CNB_USERNAME` in the workflow if yours differs). A tag that does not match `package.json` fails the job, so a wrong version can never be published.
+**npmjs needs no secret at all** (it uses OIDC trusted publishing; if the OIDC exchange fails the job prints a configuration checklist and fails). The CNB npm username is always `cnb` (change `CNB_USERNAME` in the workflow if yours differs). A tag that does not match `package.json` fails the job, so a wrong version can never be published.
 
 ## Docs
 

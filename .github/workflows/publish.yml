@@ -4,8 +4,7 @@
 #   1) 推送版本标签：git tag vX.Y.Z && git push origin vX.Y.Z
 #   2) 手动触发（Actions → publish → Run workflow）；手动触发时，已存在的版本会被跳过
 #
-# npmjs 认证：优先用 npm 官方的 Trusted Publishing（OIDC，无需任何长期令牌）；
-#   若该包尚未在 npmjs 上配置 Trusted Publisher，则自动回退到 NPM_TOKEN。
+# npmjs 认证：使用 npm 官方的 Trusted Publishing（OIDC），**不需要任何长期令牌**。
 #   配置位置：https://www.npmjs.com/package/dsh-opencode-zen-plugin → Settings → Trusted Publisher
 #     Publisher:      GitHub Actions
 #     Organization:   A42Null
@@ -18,8 +17,7 @@
 # 一次性前置配置（GitHub 网页；令牌绝不写入本文件）
 #   Settings → Environments → cnb → Environment secrets：
 #     CNB_TOKEN   CNB 访问令牌（生成时需勾选「制品库」权限）—— 缺失会让任务失败
-#     NPM_TOKEN   npmjs token（Granular「Read and write」+ Bypass 2FA）—— 仅作 OIDC 的回退；
-#                 若已配好 Trusted Publisher，这个密钥可以删除
+#   npmjs 不需要任何密钥（若 OIDC 失败，任务会给出配置检查清单并失败）
 #
 # 行为要点
 #   - 包为无作用域名 dsh-opencode-zen-plugin，npmjs 上默认为公开包，无需 --access public。
@@ -145,25 +143,14 @@ jobs:
           npm publish --registry "$NPM_REGISTRY"
           echo "::notice::已通过 Trusted Publishing 发布 $name@$version 到 npmjs"
 
-      - name: Publish to npmjs (token fallback)
+      - name: Diagnose npmjs publish failure
         if: steps.npm_oidc.outcome == 'failure'
-        env:
-          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: |
-          set -euo pipefail
-          token="$(printf '%s' "${NPM_TOKEN:-}" | tr -d '[:space:]')"
-          if [ -z "$token" ]; then
-            echo "::error::OIDC 发布失败，且未配置 NPM_TOKEN —— 请在 npmjs 上配置 Trusted Publisher（推荐），或添加 NPM_TOKEN 密钥"
-            exit 1
-          fi
-          echo "::add-mask::$token"
-          printf '//registry.npmjs.org/:_authToken=%s\n' "$token" >> "$HOME/.npmrc"
-          chmod 600 "$HOME/.npmrc"
-          name="$(node -p "require('./package.json').name")"
-          version="$(node -p "require('./package.json').version")"
-          echo "OIDC 未生效，改用 NPM_TOKEN 回退发布..."
-          npm publish --registry "$NPM_REGISTRY"
-          echo "::warning::已用 NPM_TOKEN 发布 $name@$version（建议尽快配置 Trusted Publisher 以便删除该长期令牌）"
+          echo "::error::npmjs 发布失败（OIDC 可信发布）—— 请检查："
+          echo "::error::1) npmjs 包设置里已配置 Trusted Publisher：Publisher=GitHub Actions, Organization=A42Null, Repository=dsh-opencode-zen-plugin, Workflow name=publish.yml, Environment=cnb"
+          echo "::error::2) 本工作流声明了 permissions: id-token: write"
+          echo "::error::3) runner 上的 npm >= 11.5.1（本工作流会先升级 npm）"
+          exit 1
 
       - name: Verify npmjs has this version
         if: always()
