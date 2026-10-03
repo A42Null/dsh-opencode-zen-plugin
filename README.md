@@ -30,23 +30,44 @@ What it does not do: it cannot make `*-free` models work (they only run inside t
 
 ## Install
 
-Published to the CNB package registry: <https://cnb.cool/A42Null/dsh-opencode-zen-plugin> (npm package `@A42Null/dsh-opencode-zen-plugin`)
+**Options 1 and 2 need no local git**; option 3 (GitHub source) does.
 
-### Option 1 — install from the CNB registry (recommended)
+### Option 1 — prebuilt tarball (recommended, no git needed)
+
+Paste this into DSH under Settings → Plugins → Add plugin, or run it on the command line:
+
+```bash
+dsh plugin add https://github.com/A42Null/dsh-opencode-zen-plugin/releases/latest/download/dsh-opencode-zen-plugin.tgz
+```
+
+The URL always points at the newest release (the asset name carries no version, so it never rots).
+
+### Option 2 — CNB package registry (no git needed)
+
+Published to <https://cnb.cool/A42Null/dsh-opencode-zen-plugin> (npm package `@A42Null/dsh-opencode-zen-plugin`):
 
 ```bash
 npm config set @A42Null:registry https://npm.cnb.cool/A42Null/dsh-opencode-zen-plugin/-/packages/
 dsh plugin add @A42Null/dsh-opencode-zen-plugin
 ```
 
-### Option 2 — install from a local directory
+### Option 3 — GitHub source (⚠️ requires git installed and on PATH)
 
-1. Get this plugin directory (e.g. `D:\DSH\插件开发\opencode-zen-dsh-plugin`)
-2. `dsh plugin add D:\DSH\插件开发\opencode-zen-dsh-plugin`, or install the local package directory via the plugin manager
+```bash
+dsh plugin add github:A42Null/dsh-opencode-zen-plugin
+```
+
+pnpm resolves that repository with `git ls-remote`. Without git on the machine the install fails with
+`Command failed: git ls-remote "git+ssh://git@github.com/…"` / `'git' is not recognized as an internal or external command` —
+use option 1 or 2 instead, or install [Git for Windows](https://git-scm.com/download/win) first.
+
+### Option 4 — local directory (development only)
+
+`dsh plugin add D:\DSH\插件开发\opencode-zen-dsh-plugin`, or install the local package directory via the plugin manager.
 
 ### Then
 
-3. Restart DSH (or reload plugins); the plugin registers provider `opencode-zen` (override via `providerId` in `cordis.patch.yml`)
+1. Restart DSH (or reload plugins); the plugin registers provider `opencode-zen` (override via `providerId` in `cordis.patch.yml`)
 
 The package ships a `dsh.bundle.patch` (`cordis.patch.yml`), so installation writes the registration row into the profile patch automatically, and `dsh.client` provides the Web settings card.
 
@@ -82,6 +103,7 @@ All endpoints use `Authorization: Bearer <apiKey>`; Anthropic endpoints also sen
 
 | Symptom | Action |
 | --- | --- |
+| Install fails with `git ls-remote` / `'git' is not recognized` | The machine has no git, and `github:` source installs need it → use option 1 (prebuilt tarball) or option 2 (CNB registry), or install Git for Windows first |
 | AUTH error | Missing or invalid API Key → paste one under Settings → Plugins → OpenCode Zen → Configure; the model list needs no auth, so models stay visible without a key |
 | FREE_TIER_BLOCKED (403 FreeTierError) | A `*-free` model was selected; the free tier only works inside the OpenCode client → disable "include free models" or use a paid model |
 | QUOTA (402 Insufficient account funds) | The key is valid but the Console balance is empty → top up at https://opencode.ai/console |

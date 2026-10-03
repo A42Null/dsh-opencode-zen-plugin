@@ -30,23 +30,44 @@ DeepSeek Harness 插件：自动适配 [OpenCode Console (Zen) 模型目录](htt
 
 ## 安装
 
-包已发布到 CNB 制品库：<https://cnb.cool/A42Null/dsh-opencode-zen-plugin>（npm 包名 `@A42Null/dsh-opencode-zen-plugin`）
+**方式一与方式二都不需要本机安装 git**；方式三（GitHub 源码）需要。
 
-### 方式一：从 CNB 制品库安装（推荐）
+### 方式一：预构建 tarball（推荐，无需 git）
+
+在 DSH「设置 → 插件 → 添加插件」里粘贴，或命令行执行：
+
+```bash
+dsh plugin add https://github.com/A42Null/dsh-opencode-zen-plugin/releases/latest/download/dsh-opencode-zen-plugin.tgz
+```
+
+该地址始终指向最新版本（Release 资产名不含版本号，因此不会随发版失效）。
+
+### 方式二：CNB 制品库（无需 git）
+
+包已发布到 <https://cnb.cool/A42Null/dsh-opencode-zen-plugin>（npm 包名 `@A42Null/dsh-opencode-zen-plugin`）：
 
 ```bash
 npm config set @A42Null:registry https://npm.cnb.cool/A42Null/dsh-opencode-zen-plugin/-/packages/
 dsh plugin add @A42Null/dsh-opencode-zen-plugin
 ```
 
-### 方式二：本地目录安装
+### 方式三：GitHub 源码（⚠️ 需要本机已安装 git 且在 PATH 中）
 
-1. 获取本插件目录（如 `D:\DSH\插件开发\opencode-zen-dsh-plugin`）
-2. `dsh plugin add D:\DSH\插件开发\opencode-zen-dsh-plugin`，或通过插件管理器安装本地包目录
+```bash
+dsh plugin add github:A42Null/dsh-opencode-zen-plugin
+```
+
+pnpm 会调用 `git ls-remote` 解析该仓库。若机器没装 git，会报
+`Command failed: git ls-remote "git+ssh://git@github.com/…"` 或 `'git' 不是内部或外部命令`——
+此时请改用方式一/方式二，或先安装 [Git for Windows](https://git-scm.com/download/win)。
+
+### 方式四：本地目录（开发调试用）
+
+`dsh plugin add D:\DSH\插件开发\opencode-zen-dsh-plugin`，或通过插件管理器安装本地包目录。
 
 ### 通用
 
-3. 重启 DSH（或重载插件），插件自动注册 provider `opencode-zen`（可经 `cordis.patch.yml` 的 `providerId` 覆盖）
+1. 安装后重启 DSH（或重载插件），插件自动注册 provider `opencode-zen`（可经 `cordis.patch.yml` 的 `providerId` 覆盖）
 
 插件包内含 `dsh.bundle.patch`（`cordis.patch.yml`），安装时自动向 profile 补丁写入注册行；同时通过 `dsh.client` 提供 Web 设置卡片。
 
@@ -82,6 +103,7 @@ dsh plugin add @A42Null/dsh-opencode-zen-plugin
 
 | 现象 | 处理 |
 | --- | --- |
+| 安装失败：`git ls-remote` / `'git' 不是内部或外部命令` | 该机器没装 git，而 `github:` 源码安装需要它 → 改用方式一（预构建 tarball）或方式二（CNB 制品库），或先安装 Git for Windows |
 | AUTH 错误 | 未填 API Key 或 Key 无效 → 在「设置 → 插件 → OpenCode Zen → 配置」粘贴；模型列表无需鉴权，故 Key 缺失时仍能看到模型 |
 | FREE_TIER_BLOCKED（403 FreeTierError） | 选了 `*-free` 免费模型。免费层只能在 OpenCode 客户端内使用 → 关闭"包含免费模型"或改用付费模型 |
 | QUOTA（402 Insufficient account funds） | Key 有效但 Console 账户余额不足 → 到 https://opencode.ai/console 充值 |
