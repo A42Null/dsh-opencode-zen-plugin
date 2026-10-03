@@ -44,6 +44,11 @@ dsh plugin add @A42Null/dsh-opencode-zen-plugin
 1. 获取本插件目录（如 `D:\DSH\插件开发\opencode-zen-dsh-plugin`）
 2. `dsh plugin add D:\DSH\插件开发\opencode-zen-dsh-plugin`，或通过插件管理器安装本地包目录
 
+### 方式三：从 GitHub 安装（更便捷）
+```bash
+dsh plugin add github:A42Null/dsh-opencode-zen-plugin
+```
+
 ### 通用
 
 3. 重启 DSH（或重载插件），插件自动注册 provider `opencode-zen`（可经 `cordis.patch.yml` 的 `providerId` 覆盖）
