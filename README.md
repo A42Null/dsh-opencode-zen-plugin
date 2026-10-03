@@ -80,14 +80,33 @@ All endpoints use `Authorization: Bearer <apiKey>`; Anthropic endpoints also sen
 | --- | --- |
 | AUTH error | Missing or invalid API Key → paste one under Settings → Plugins → OpenCode Zen → Configure; the model list needs no auth, so models stay visible without a key |
 | FREE_TIER_BLOCKED (403 FreeTierError) | A `*-free` model was selected; the free tier only works inside the OpenCode client → disable "include free models" or use a paid model |
-| QUOTA_EXCEEDED (402 Insufficient account funds) | The key is valid but the Console balance is empty → top up at https://opencode.ai/console |
+| QUOTA (402 Insufficient account funds) | The key is valid but the Console balance is empty → top up at https://opencode.ai/console |
 | MODEL_ACCESS_DISABLED (403 Model access is disabled) | The Console account lacks access to that model → pick a different model |
+| RATE_LIMIT (429) | Too many requests → retry later |
 | opencode-zen missing from Settings | The client half is not loaded (older install / no restart) → make sure `lib/client.js` exists and `package.json` declares `dsh.client` plus the `"./client"` export, then restart DSH and reload the page |
-| QUOTA_EXCEEDED / RATE_LIMIT | Console balance or rate limit → check usage at https://opencode.ai/console |
 | SERVER / TRANSPORT / TIMEOUT | Gateway/network issue → retry later; check `lastError` in `adapter-status.json` |
 | CONTEXT_WINDOW_EXCEEDED | Input exceeded the model's context window → shorten the session or pick a larger-window model |
 | Empty or stale model list | Live-list failures fall back to the embedded static catalog; inspect `adapter-status.json` |
 | `jev-*` reports INVALID_REQUEST | That family uses the SystemOne endpoint and is not chat-capable; excluded from the catalog |
+
+## Releasing (maintainers)
+
+Push a tag that matches the `version` in `package.json` and the package is published to the CNB registry automatically (workflow [`.github/workflows/publish.yml`](.github/workflows/publish.yml)):
+
+```bash
+npm version patch --no-git-tag-version   # or edit version in package.json manually
+git commit -am "chore: release vX.Y.Z"
+git tag vX.Y.Z
+git push origin main --follow-tags
+```
+
+One-time token setup: create an environment named **`cnb`** under the repository's `Settings → Environments` and add an **Environment secret**:
+
+| Secret | Value |
+| --- | --- |
+| `CNB_TOKEN` | CNB access token (enable the package-registry scope when creating it) |
+
+The workflow reads the token only from that Environment secret — **no token is ever stored in the repository**. The CNB npm username is always `cnb` (change `CNB_USERNAME` in the workflow if yours differs). A tag that does not match `package.json` fails the job, so a wrong version can never be published.
 
 ## Docs
 

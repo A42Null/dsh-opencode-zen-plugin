@@ -80,14 +80,33 @@ dsh plugin add @A42Null/dsh-opencode-zen-plugin
 | --- | --- |
 | AUTH 错误 | 未填 API Key 或 Key 无效 → 在「设置 → 插件 → OpenCode Zen → 配置」粘贴；模型列表无需鉴权，故 Key 缺失时仍能看到模型 |
 | FREE_TIER_BLOCKED（403 FreeTierError） | 选了 `*-free` 免费模型。免费层只能在 OpenCode 客户端内使用 → 关闭"包含免费模型"或改用付费模型 |
-| QUOTA_EXCEEDED（402 Insufficient account funds） | Key 有效但 Console 账户余额不足 → 到 https://opencode.ai/console 充值 |
+| QUOTA（402 Insufficient account funds） | Key 有效但 Console 账户余额不足 → 到 https://opencode.ai/console 充值 |
 | MODEL_ACCESS_DISABLED（403 Model access is disabled） | 该 Console 账号没有此模型的访问权限 → 换一个模型 |
+| RATE_LIMIT（429） | 调用频率超限 → 稍后重试 |
 | 设置里找不到 opencode-zen | 客户端半部未被加载（旧版安装/未重启）→ 确认 `lib/client.js` 存在、`package.json` 含 `dsh.client` 与 `"./client"` 导出，然后重启 DSH 并刷新页面 |
-| QUOTA_EXCEEDED / RATE_LIMIT | Console 余额或调用频率限制 → 检查 https://opencode.ai/console 用量 |
 | SERVER / TRANSPORT / TIMEOUT | 网关或网络异常 → 稍后重试；查看 `adapter-status.json` 的 `lastError` |
 | CONTEXT_WINDOW_EXCEEDED | 输入超出模型上下文窗口 → 缩短会话或换更大窗口的模型 |
 | 模型列表为空或陈旧 | live 列表失败时自动回退内置静态目录；检查 `adapter-status.json` |
 | `jev-*` 报 INVALID_REQUEST | 该系列走 SystemOne 专用端点，不支持对话，已从目录排除 |
+
+## 发布（维护者）
+
+推送与 `package.json` 中 `version` 一致的标签，即自动发布到 CNB 制品库（工作流 [`.github/workflows/publish.yml`](.github/workflows/publish.yml)）：
+
+```bash
+npm version patch --no-git-tag-version   # 或手动修改 package.json 的 version
+git commit -am "chore: release vX.Y.Z"
+git tag vX.Y.Z
+git push origin main --follow-tags
+```
+
+令牌配置（一次性）：在 GitHub 仓库 `Settings → Environments` 新建名为 **`cnb`** 的环境，并在该环境中添加 **Environment secret**：
+
+| Secret 名 | 值 |
+| --- | --- |
+| `CNB_TOKEN` | CNB 访问令牌（生成时需勾选「制品库」权限） |
+
+工作流只从该 Environment secret 读取令牌，**仓库内不保存任何令牌**；CNB 的 npm 用户名固定为 `cnb`（如需不同可在工作流的 `CNB_USERNAME` 中修改）。标签版本与 `package.json` 不一致时任务会直接失败，避免发错版本。
 
 ## 文档
 

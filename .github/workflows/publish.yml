@@ -1,0 +1,94 @@
+# 发布 @A42Null/dsh-opencode-zen-plugin 到 CNB 制品库（npm 兼容协议）
+#
+# 触发方式
+#   1) 推送版本标签：git tag v0.2.4 && git push origin v0.2.4
+#   2) 手动触发（Actions → publish-cnb → Run workflow）
+#
+# 一次性前置配置（在 GitHub 网页完成，令牌不会出现在本文件中）
+#   Settings → Environments → New environment → 名称填 `cnb`
+#   进入该 Environment → Environment secrets → Add secret
+#     Name : CNB_TOKEN
+#     Value: CNB 访问令牌（生成时需勾选「制品库」权限）
+#   说明：CNB 制品库的 npm 用户名为固定的 `cnb`，因此只需一个令牌即可；
+#         若你的用户名不同，可在本文件底部把 CNB_USERNAME 改成对应值。
+#
+# 行为要点
+#   - 认证采用 CNB 要求的 Basic 认证（用户名 + 访问令牌），即 .npmrc 里的 _auth，
+#     而不是 npm 默认的 _authToken（Bearer）；两者不可混用。
+#   - 标签版本必须与 package.json 的 version 一致，否则任务失败，避免发错版本。
+#   - 缺少 CNB_TOKEN 时任务立即失败并给出配置提示。
+
+name: publish-cnb
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: publish-cnb-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    name: publish to CNB registry
+    runs-on: ubuntu-latest
+    # 关键：使用名为 cnb 的 Environment，令牌只从该 Environment 的 secrets 读取
+    environment: cnb
+    env:
+      CNB_REGISTRY: https://npm.cnb.cool/A42Null/dsh-opencode-zen-plugin/-/packages/
+      CNB_USERNAME: cnb
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Verify tag matches package.json version
+        if: startsWith(github.ref, 'refs/tags/')
+        run: |
+          tag_version="${GITHUB_REF_NAME#v}"
+          pkg_version="$(node -p "require('./package.json').version")"
+          echo "tag=${tag_version} package.json=${pkg_version}"
+          if [ "$tag_version" != "$pkg_version" ]; then
+            echo "::error::tag ${GITHUB_REF_NAME} does not match package.json version ${pkg_version}"
+            exit 1
+          fi
+
+      - name: Syntax check
+        run: |
+          node --check lib/index.js
+          node --check lib/client.js
+
+      - name: Configure CNB registry credentials
+        env:
+          CNB_TOKEN: ${{ secrets.CNB_TOKEN }}
+        run: |
+          set -euo pipefail
+          if [ -z "${CNB_TOKEN:-}" ]; then
+            echo "::error::缺少 Environment secret CNB_TOKEN —— Settings → Environments → cnb → Environment secrets 中添加"
+            exit 1
+          fi
+          # Basic 认证：base64("<用户名>:<访问令牌>")
+          auth="$(node -e "process.stdout.write(Buffer.from(process.env.CNB_USERNAME + ':' + process.env.CNB_TOKEN).toString('base64'))")"
+          registry_key="//npm.cnb.cool/A42Null/dsh-opencode-zen-plugin/-/packages/"
+          printf '%s:_auth=%s\n' "$registry_key" "$auth" >> "$HOME/.npmrc"
+          printf '@A42Null:registry=%s\n' "$CNB_REGISTRY" >> "$HOME/.npmrc"
+          chmod 600 "$HOME/.npmrc"
+          echo "::add-mask::$auth"
+          echo "已配置 CNB 制品库凭据（令牌来自 Environment secret，未写入仓库）"
+
+      - name: Publish to CNB
+        run: |
+          set -euo pipefail
+          version="$(node -p "require('./package.json').version")"
+          echo "正在发布 @A42Null/dsh-opencode-zen-plugin@${version} 到 ${CNB_REGISTRY}"
+          npm publish --registry "$CNB_REGISTRY"
+          echo "::notice::已发布 @A42Null/dsh-opencode-zen-plugin@${version}"
