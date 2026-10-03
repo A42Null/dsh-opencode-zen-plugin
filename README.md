@@ -1,4 +1,4 @@
-# @A42Null/dsh-opencode-zen-plugin
+# dsh-opencode-zen-plugin
 
 **English** | [简体中文](./README.zh-CN.md)
 
@@ -6,7 +6,7 @@ DeepSeek Harness plugin that auto-adapts the [OpenCode Console (Zen) model catal
 
 - GitHub: <https://github.com/A42Null/dsh-opencode-zen-plugin>
 - CNB package registry: <https://cnb.cool/A42Null/dsh-opencode-zen-plugin>
-- npm package: `@A42Null/dsh-opencode-zen-plugin` (see Install below)
+- npm package: `dsh-opencode-zen-plugin` (published on npmjs; see Install below)
 
 **Paste an OpenCode Console API Key under Settings → Plugins and the Console's chat models become selectable in DSH.** Model list, context windows, endpoint routing, and reasoning parameters are handled automatically.
 
@@ -30,9 +30,17 @@ What it does not do: it cannot make `*-free` models work (they only run inside t
 
 ## Install
 
-**Options 1 and 2 need no local git**; option 3 (GitHub source) does.
+**Option 1 is the recommended one: no git, no registry setup.** Only option 3 (GitHub source) needs git on the machine.
 
-### Option 1 — prebuilt tarball (recommended, no git needed)
+### Option 1 — install from npmjs (recommended)
+
+```bash
+dsh plugin add dsh-opencode-zen-plugin
+```
+
+Package page: <https://www.npmjs.com/package/dsh-opencode-zen-plugin>
+
+### Option 2 — prebuilt tarball (no git needed)
 
 Paste this into DSH under Settings → Plugins → Add plugin, or run it on the command line:
 
@@ -41,15 +49,6 @@ dsh plugin add https://github.com/A42Null/dsh-opencode-zen-plugin/releases/lates
 ```
 
 The URL always points at the newest release (the asset name carries no version, so it never rots).
-
-### Option 2 — CNB package registry (no git needed)
-
-Published to <https://cnb.cool/A42Null/dsh-opencode-zen-plugin> (npm package `@A42Null/dsh-opencode-zen-plugin`):
-
-```bash
-npm config set @A42Null:registry https://npm.cnb.cool/A42Null/dsh-opencode-zen-plugin/-/packages/
-dsh plugin add @A42Null/dsh-opencode-zen-plugin
-```
 
 ### Option 3 — GitHub source (⚠️ requires git installed and on PATH)
 
@@ -64,6 +63,17 @@ use option 1 or 2 instead, or install [Git for Windows](https://git-scm.com/down
 ### Option 4 — local directory (development only)
 
 `dsh plugin add D:\DSH\插件开发\opencode-zen-dsh-plugin`, or install the local package directory via the plugin manager.
+
+### Optional — CNB mirror
+
+The same package is also published to the CNB registry <https://cnb.cool/A42Null/dsh-opencode-zen-plugin>:
+
+```bash
+npm config set registry https://npm.cnb.cool/A42Null/dsh-opencode-zen-plugin/-/packages/
+dsh plugin add dsh-opencode-zen-plugin
+```
+
+That points your default registry at CNB, so switch it back afterwards (e.g. `npm config set registry https://registry.npmmirror.com`).
 
 ### Then
 

@@ -1,4 +1,4 @@
-# @A42Null/dsh-opencode-zen-plugin
+# dsh-opencode-zen-plugin
 
 [English](./README.md) | **简体中文**
 
@@ -6,7 +6,7 @@ DeepSeek Harness 插件：自动适配 [OpenCode Console (Zen) 模型目录](htt
 
 - GitHub：<https://github.com/A42Null/dsh-opencode-zen-plugin>
 - CNB 制品库：<https://cnb.cool/A42Null/dsh-opencode-zen-plugin>
-- npm 包名：`@A42Null/dsh-opencode-zen-plugin`（安装方式见下文）
+- npm 包名：`dsh-opencode-zen-plugin`（已发布到 npmjs；安装方式见下文）
 
 **只需在「设置 → 插件」粘贴 OpenCode Console 的 API Key，即可在 DSH 中选用 Console 提供的对话模型** —— 模型列表、上下文窗口、端点路由、推理参数自动完成。
 
@@ -30,9 +30,17 @@ DeepSeek Harness 插件：自动适配 [OpenCode Console (Zen) 模型目录](htt
 
 ## 安装
 
-**方式一与方式二都不需要本机安装 git**；方式三（GitHub 源码）需要。
+**方式一推荐：零配置，既不需要 git，也不需要改任何 registry。** 只有方式三（GitHub 源码）需要本机已安装 git。
 
-### 方式一：预构建 tarball（推荐，无需 git）
+### 方式一：从 npmjs 安装（推荐）
+
+```bash
+dsh plugin add dsh-opencode-zen-plugin
+```
+
+包页面：<https://www.npmjs.com/package/dsh-opencode-zen-plugin>
+
+### 方式二：预构建 tarball（无需 git）
 
 在 DSH「设置 → 插件 → 添加插件」里粘贴，或命令行执行：
 
@@ -42,16 +50,7 @@ dsh plugin add https://github.com/A42Null/dsh-opencode-zen-plugin/releases/lates
 
 该地址始终指向最新版本（Release 资产名不含版本号，因此不会随发版失效）。
 
-### 方式二：CNB 制品库（无需 git）
-
-包已发布到 <https://cnb.cool/A42Null/dsh-opencode-zen-plugin>（npm 包名 `@A42Null/dsh-opencode-zen-plugin`）：
-
-```bash
-npm config set @A42Null:registry https://npm.cnb.cool/A42Null/dsh-opencode-zen-plugin/-/packages/
-dsh plugin add @A42Null/dsh-opencode-zen-plugin
-```
-
-### 方式三：GitHub 源码（一条命令最便捷；⚠️ 需要本机已安装 git 且在 PATH 中）
+### 方式三：GitHub 源码（⚠️ 需要本机已安装 git 且在 PATH 中）
 
 ```bash
 dsh plugin add github:A42Null/dsh-opencode-zen-plugin
@@ -64,6 +63,17 @@ pnpm 会调用 `git ls-remote` 解析该仓库。若机器没装 git，会报
 ### 方式四：本地目录（开发调试用）
 
 `dsh plugin add D:\DSH\插件开发\opencode-zen-dsh-plugin`，或通过插件管理器安装本地包目录。
+
+### 可选：CNB 镜像源
+
+同一个包也发布在 CNB 制品库 <https://cnb.cool/A42Null/dsh-opencode-zen-plugin>。需要改用它时：
+
+```bash
+npm config set registry https://npm.cnb.cool/A42Null/dsh-opencode-zen-plugin/-/packages/
+dsh plugin add dsh-opencode-zen-plugin
+```
+
+注意这会把默认 registry 指向 CNB，用完请改回（例如 `npm config set registry https://registry.npmmirror.com`）。
 
 ### 通用
 
