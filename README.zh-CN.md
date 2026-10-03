@@ -51,7 +51,7 @@ npm config set @A42Null:registry https://npm.cnb.cool/A42Null/dsh-opencode-zen-p
 dsh plugin add @A42Null/dsh-opencode-zen-plugin
 ```
 
-### 方式三：GitHub 源码（⚠️ 需要本机已安装 git 且在 PATH 中）
+### 方式三：GitHub 源码（一条命令最便捷；⚠️ 需要本机已安装 git 且在 PATH 中）
 
 ```bash
 dsh plugin add github:A42Null/dsh-opencode-zen-plugin
