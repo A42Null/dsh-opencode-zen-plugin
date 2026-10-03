@@ -27,6 +27,7 @@ What it does not do: it cannot make `*-free` models work (they only run inside t
 - **Full harness stream protocol**: streamed text / reasoning / tool-call blocks, usage accounting, stop-reason mapping, and error classification (AUTH, QUOTA, FREE_TIER_BLOCKED, MODEL_ACCESS_DISABLED, RATE_LIMIT, INVALID_REQUEST, SERVER, TIMEOUT, TRANSPORT, CONTEXT_WINDOW_EXCEEDED, EMPTY_RESPONSE)
 - **Tool calls & image input**: vision models (claude- / gemini- / deepseek-v4-flash-vision, ...) accept image attachments
 - **Stream watchdog**: aborts after 120s first-byte / 300s idle to avoid hung requests
+- **UI language follows DSH**: the settings card renders in Simplified Chinese or English, matching the interface language
 
 ## Install
 

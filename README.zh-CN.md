@@ -27,6 +27,7 @@ DeepSeek Harness 插件：自动适配 [OpenCode Console (Zen) 模型目录](htt
 - **完整 Harness 流协议**：文本 / 推理 / 工具调用分块流式输出、usage 计费、停止原因映射与错误分类（AUTH、QUOTA、FREE_TIER_BLOCKED、MODEL_ACCESS_DISABLED、RATE_LIMIT、INVALID_REQUEST、SERVER、TIMEOUT、TRANSPORT、CONTEXT_WINDOW_EXCEEDED、EMPTY_RESPONSE）
 - **工具调用与图片输入**：vision 模型（claude- / gemini- / deepseek-v4-flash-vision 等）支持图片附件
 - **流看门狗**：120 秒首包 / 300 秒空闲超时自动中止，避免挂死
+- **界面语言跟随 DSH**：设置卡片按当前界面语言显示简体中文或 English
 
 ## 安装
 
