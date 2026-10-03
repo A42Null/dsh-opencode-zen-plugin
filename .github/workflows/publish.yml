@@ -76,14 +76,28 @@ jobs:
             echo "::error::缺少 Environment secret CNB_TOKEN —— Settings → Environments → cnb → Environment secrets 中添加"
             exit 1
           fi
-          # Basic 认证：base64("<用户名>:<访问令牌>")
-          auth="$(node -e "process.stdout.write(Buffer.from(process.env.CNB_USERNAME + ':' + process.env.CNB_TOKEN).toString('base64'))")"
+          # 去掉可能混入的空白/换行（在网页或命令行写入 secret 时常见），再参与鉴权
+          token="$(printf '%s' "$CNB_TOKEN" | tr -d '[:space:]')"
+          if [ -z "$token" ]; then
+            echo "::error::Environment secret CNB_TOKEN 为空或仅含空白字符"
+            exit 1
+          fi
+          echo "::add-mask::$token"
+          # Basic 认证：base64("<用户名>:<访问令牌>")；CNB 需要 _auth 而非 _authToken(Bearer)
+          auth="$(CNB_TOKEN="$token" node -e "process.stdout.write(Buffer.from(process.env.CNB_USERNAME + ':' + process.env.CNB_TOKEN).toString('base64'))")"
+          echo "::add-mask::$auth"
           registry_key="//npm.cnb.cool/A42Null/dsh-opencode-zen-plugin/-/packages/"
           printf '%s:_auth=%s\n' "$registry_key" "$auth" >> "$HOME/.npmrc"
           printf '@A42Null:registry=%s\n' "$CNB_REGISTRY" >> "$HOME/.npmrc"
           chmod 600 "$HOME/.npmrc"
-          echo "::add-mask::$auth"
           echo "已配置 CNB 制品库凭据（令牌来自 Environment secret，未写入仓库）"
+
+      - name: Verify registry auth
+        run: |
+          set -euo pipefail
+          who="$(npm whoami --registry "$CNB_REGISTRY")"
+          echo "registry user: $who"
+          test "$who" = "$CNB_USERNAME"
 
       - name: Publish to CNB
         run: |
