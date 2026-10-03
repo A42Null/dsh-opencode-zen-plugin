@@ -4,21 +4,28 @@
 #   1) 推送版本标签：git tag vX.Y.Z && git push origin vX.Y.Z
 #   2) 手动触发（Actions → publish → Run workflow）；手动触发时，已存在的版本会被跳过
 #
-# 一次性前置配置（在 GitHub 网页完成，令牌绝不写入本文件）
-#   Settings → Environments → New environment → 名称填 `cnb`
-#   （环境名沿用早期的 cnb；它现在同时保存两个注册表的令牌）
-#   进入该 Environment → Environment secrets → Add secret：
-#     CNB_TOKEN   CNB 访问令牌（生成时需勾选「制品库」权限）
-#     NPM_TOKEN   npmjs 的 Automation 类型 access token
-#   ⚠️ npmjs 令牌必须选 Automation 类型：Publish 类型会要求一次性口令(OTP)，CI 中无法输入。
-#   CNB_TOKEN 缺失会让任务失败；NPM_TOKEN 缺失只跳过 npmjs 并给出警告。
+# npmjs 认证：优先用 npm 官方的 Trusted Publishing（OIDC，无需任何长期令牌）；
+#   若该包尚未在 npmjs 上配置 Trusted Publisher，则自动回退到 NPM_TOKEN。
+#   配置位置：https://www.npmjs.com/package/dsh-opencode-zen-plugin → Settings → Trusted Publisher
+#     Publisher:      GitHub Actions
+#     Organization:   A42Null
+#     Repository:     dsh-opencode-zen-plugin
+#     Workflow name:  publish.yml
+#     Environment:    cnb            （与本文件的 `environment:` 一致；留空表示不限环境）
+#
+# CNB 认证：Basic 认证（_auth = base64("cnb:<访问令牌>")），令牌来自 Environment secret。
+#
+# 一次性前置配置（GitHub 网页；令牌绝不写入本文件）
+#   Settings → Environments → cnb → Environment secrets：
+#     CNB_TOKEN   CNB 访问令牌（生成时需勾选「制品库」权限）—— 缺失会让任务失败
+#     NPM_TOKEN   npmjs token（Granular「Read and write」+ Bypass 2FA）—— 仅作 OIDC 的回退；
+#                 若已配好 Trusted Publisher，这个密钥可以删除
 #
 # 行为要点
-#   - 认证方式不同：CNB 需要 Basic 认证（_auth = base64("cnb:<token>")），
-#     npmjs 用标准的 _authToken（Bearer），两者分别写入 $HOME/.npmrc。
 #   - 包为无作用域名 dsh-opencode-zen-plugin，npmjs 上默认为公开包，无需 --access public。
 #   - 标签触发时会校验标签版本与 package.json 的 version 一致，避免发错版本。
 #   - 幂等：目标注册表上已存在同版本则跳过，因此重复推送标签不会产生红色失败。
+#   - 末尾会校验 npmjs 上确实存在该版本，避免"两步都跳过/都失败"却显示成功。
 
 name: publish
 
@@ -30,6 +37,7 @@ on:
 
 permissions:
   contents: read
+  id-token: write # npm Trusted Publishing（OIDC）需要
 
 concurrency:
   group: publish-${{ github.ref }}
@@ -39,7 +47,7 @@ jobs:
   publish:
     name: publish to npmjs and CNB
     runs-on: ubuntu-latest
-    # 关键：令牌只从名为 cnb 的 Environment secrets 读取（该环境保存 CNB_TOKEN 与 NPM_TOKEN）
+    # 令牌只从名为 cnb 的 Environment secrets 读取
     environment: cnb
     env:
       CNB_REGISTRY: https://npm.cnb.cool/A42Null/dsh-opencode-zen-plugin/-/packages/
@@ -53,6 +61,12 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: "22"
+
+      - name: Upgrade npm (trusted publishing needs >= 11.5.1)
+        run: |
+          set -euo pipefail
+          npm install -g npm@11 >/dev/null 2>&1 || npm install -g npm@latest
+          echo "npm $(npm --version)"
 
       - name: Verify tag matches package.json version
         if: startsWith(github.ref, 'refs/tags/')
@@ -116,44 +130,62 @@ jobs:
 
       # ---------------- npmjs ----------------
 
-      - name: Configure npmjs credentials
-        id: npmjs
-        env:
-          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
-        run: |
-          set -euo pipefail
-          token="$(printf '%s' "${NPM_TOKEN:-}" | tr -d '[:space:]')"
-          if [ -z "$token" ]; then
-            echo "::warning::未配置 Environment secret NPM_TOKEN，本次跳过 npmjs 发布（CNB 仍会发布）。请在 Settings → Environments → cnb 中添加 Automation 类型 token。"
-            echo "available=false" >> "$GITHUB_OUTPUT"
-            exit 0
-          fi
-          echo "::add-mask::$token"
-          printf '//registry.npmjs.org/:_authToken=%s\n' "$token" >> "$HOME/.npmrc"
-          chmod 600 "$HOME/.npmrc"
-          echo "available=true" >> "$GITHUB_OUTPUT"
-          echo "已配置 npmjs 凭据（令牌来自 Environment secret，未写入仓库）"
-
-      - name: Publish to npmjs (idempotent)
-        if: steps.npmjs.outputs.available == 'true'
+      - name: Publish to npmjs (trusted publishing / OIDC, idempotent)
+        id: npm_oidc
+        continue-on-error: true
         run: |
           set -euo pipefail
           name="$(node -p "require('./package.json').name")"
           version="$(node -p "require('./package.json').version")"
           if npm view "$name@$version" version --registry "$NPM_REGISTRY" >/dev/null 2>&1; then
             echo "::notice::$name@$version 已存在于 npmjs，跳过发布"
+            exit 0
+          fi
+          echo "尝试以 Trusted Publishing（OIDC，无令牌）发布..."
+          npm publish --registry "$NPM_REGISTRY"
+          echo "::notice::已通过 Trusted Publishing 发布 $name@$version 到 npmjs"
+
+      - name: Publish to npmjs (token fallback)
+        if: steps.npm_oidc.outcome == 'failure'
+        env:
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          set -euo pipefail
+          token="$(printf '%s' "${NPM_TOKEN:-}" | tr -d '[:space:]')"
+          if [ -z "$token" ]; then
+            echo "::error::OIDC 发布失败，且未配置 NPM_TOKEN —— 请在 npmjs 上配置 Trusted Publisher（推荐），或添加 NPM_TOKEN 密钥"
+            exit 1
+          fi
+          echo "::add-mask::$token"
+          printf '//registry.npmjs.org/:_authToken=%s\n' "$token" >> "$HOME/.npmrc"
+          chmod 600 "$HOME/.npmrc"
+          name="$(node -p "require('./package.json').name")"
+          version="$(node -p "require('./package.json').version")"
+          echo "OIDC 未生效，改用 NPM_TOKEN 回退发布..."
+          npm publish --registry "$NPM_REGISTRY"
+          echo "::warning::已用 NPM_TOKEN 发布 $name@$version（建议尽快配置 Trusted Publisher 以便删除该长期令牌）"
+
+      - name: Verify npmjs has this version
+        if: always()
+        run: |
+          set -euo pipefail
+          name="$(node -p "require('./package.json').name")"
+          version="$(node -p "require('./package.json').version")"
+          if npm view "$name@$version" version --registry "$NPM_REGISTRY" >/dev/null 2>&1; then
+            echo "::notice::npmjs 上已存在 $name@$version"
           else
-            npm publish --registry "$NPM_REGISTRY"
-            echo "::notice::已发布 $name@$version 到 npmjs"
+            echo "::error::npmjs 上不存在 $name@$version —— 发布未成功"
+            exit 1
           fi
 
       - name: Summary
+        if: always()
         run: |
           name="$(node -p "require('./package.json').name")"
           version="$(node -p "require('./package.json').version")"
           {
             echo "### $name@$version"
             echo ""
-            echo "- CNB: $CNB_REGISTRY"
             echo "- npmjs: https://www.npmjs.com/package/$name"
+            echo "- CNB: $CNB_REGISTRY"
           } >> "$GITHUB_STEP_SUMMARY"

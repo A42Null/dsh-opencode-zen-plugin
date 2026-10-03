@@ -127,7 +127,7 @@ All endpoints use `Authorization: Bearer <apiKey>`; Anthropic endpoints also sen
 
 ## Releasing (maintainers)
 
-Push a tag that matches the `version` in `package.json` and the package is published to the CNB registry automatically (workflow [`.github/workflows/publish.yml`](.github/workflows/publish.yml)):
+Push a tag that matches the `version` in `package.json` and the package is published to **npmjs and the CNB registry** automatically (workflow [`.github/workflows/publish.yml`](.github/workflows/publish.yml)):
 
 ```bash
 npm version patch --no-git-tag-version   # or edit version in package.json manually
@@ -136,13 +136,32 @@ git tag vX.Y.Z
 git push origin main --follow-tags
 ```
 
-One-time token setup: create an environment named **`cnb`** under the repository's `Settings → Environments` and add an **Environment secret**:
+Both registries are **idempotent**: an existing version is skipped, so re-pushing a tag never fails, and the job verifies at the end that the version really is on npmjs.
 
-| Secret | Value |
+### npmjs auth: Trusted Publishing (recommended, no long-lived token)
+
+On <https://www.npmjs.com/package/dsh-opencode-zen-plugin> → `Settings → Trusted Publisher`:
+
+| Field | Value |
 | --- | --- |
-| `CNB_TOKEN` | CNB access token (enable the package-registry scope when creating it) |
+| Publisher | GitHub Actions |
+| Organization | `A42Null` |
+| Repository | `dsh-opencode-zen-plugin` |
+| Workflow name | `publish.yml` |
+| Environment | `cnb` (must match the workflow's `environment:`; leave blank for any) |
 
-The workflow reads the token only from that Environment secret — **no token is ever stored in the repository**. The CNB npm username is always `cnb` (change `CNB_USERNAME` in the workflow if yours differs). A tag that does not match `package.json` fails the job, so a wrong version can never be published.
+CI then exchanges an OIDC token for publish credentials — no token needed (the workflow already declares `permissions: id-token: write`). This is npm's own migration target, since it plans to remove bypass-2FA direct publishing in **January 2027**.
+
+### Environment secrets (configured on GitHub; no token is ever stored in the repository)
+
+`Settings → Environments → cnb → Environment secrets`:
+
+| Secret | Required | Notes |
+| --- | --- | --- |
+| `CNB_TOKEN` | yes | CNB access token (enable the package-registry scope when creating it) |
+| `NPM_TOKEN` | no | **Fallback only, when OIDC is not configured**: a Granular token with **`Read and write`** (not `Read and write (stage only)`) and **`Bypass 2FA`** checked. Delete it once the Trusted Publisher is set up |
+
+The CNB npm username is always `cnb` (change `CNB_USERNAME` in the workflow if yours differs). A tag that does not match `package.json` fails the job, so a wrong version can never be published.
 
 ## Docs
 

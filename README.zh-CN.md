@@ -127,7 +127,7 @@ dsh plugin add dsh-opencode-zen-plugin
 
 ## 发布（维护者）
 
-推送与 `package.json` 中 `version` 一致的标签，即自动发布到 CNB 制品库（工作流 [`.github/workflows/publish.yml`](.github/workflows/publish.yml)）：
+推送与 `package.json` 中 `version` 一致的标签，即自动发布到 **npmjs 与 CNB 制品库**（工作流 [`.github/workflows/publish.yml`](.github/workflows/publish.yml)）：
 
 ```bash
 npm version patch --no-git-tag-version   # 或手动修改 package.json 的 version
@@ -136,13 +136,32 @@ git tag vX.Y.Z
 git push origin main --follow-tags
 ```
 
-令牌配置（一次性）：在 GitHub 仓库 `Settings → Environments` 新建名为 **`cnb`** 的环境，并在该环境中添加 **Environment secret**：
+两个注册表都是**幂等**的：目标上已存在同版本即跳过，因此重复推送标签不会失败；任务末尾还会校验 npmjs 上确实存在该版本。
 
-| Secret 名 | 值 |
+### npmjs 认证：Trusted Publishing（推荐，无需长期令牌）
+
+在 <https://www.npmjs.com/package/dsh-opencode-zen-plugin> → `Settings → Trusted Publisher` 填写：
+
+| 字段 | 值 |
 | --- | --- |
-| `CNB_TOKEN` | CNB 访问令牌（生成时需勾选「制品库」权限） |
+| Publisher | GitHub Actions |
+| Organization | `A42Null` |
+| Repository | `dsh-opencode-zen-plugin` |
+| Workflow name | `publish.yml` |
+| Environment | `cnb`（与工作流里的 `environment:` 一致；留空表示不限环境） |
 
-工作流只从该 Environment secret 读取令牌，**仓库内不保存任何令牌**；CNB 的 npm 用户名固定为 `cnb`（如需不同可在工作流的 `CNB_USERNAME` 中修改）。标签版本与 `package.json` 不一致时任务会直接失败，避免发错版本。
+配好后 CI 通过 OIDC 直接换取发布凭证，不需要任何 token（工作流已声明 `permissions: id-token: write`）。这也是 npm 官方指定的迁移方向——它计划在 **2027 年 1 月**移除「bypass-2FA token 直接发布」。
+
+### Environment secrets（在 GitHub 网页配置，仓库内不保存任何令牌）
+
+`Settings → Environments → cnb → Environment secrets`：
+
+| Secret 名 | 必填 | 说明 |
+| --- | --- | --- |
+| `CNB_TOKEN` | 是 | CNB 访问令牌（生成时需勾选「制品库」权限） |
+| `NPM_TOKEN` | 否 | **仅作 OIDC 的回退**：Granular token，权限需为 **`Read and write`**（不是 `Read and write (stage only)`）并勾选 **`Bypass 2FA`**。配好 Trusted Publisher 后即可删除 |
+
+CNB 的 npm 用户名固定为 `cnb`（如需不同可改工作流的 `CNB_USERNAME`）。标签版本与 `package.json` 不一致时任务会直接失败，避免发错版本。
 
 ## 文档
 
