@@ -1,5 +1,7 @@
 # @A42Null/dsh-opencode-zen-plugin
 
+[English](./README.md) | **简体中文**
+
 DeepSeek Harness 插件：自动适配 [OpenCode Console (Zen) 模型目录](https://opencode.ai/v2/docs/console/models)。
 
 - GitHub：<https://github.com/A42Null/dsh-opencode-zen-plugin>
