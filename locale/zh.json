@@ -1,0 +1,6 @@
+{
+  "meta": {
+    "title": "OpenCode Zen 模型",
+    "description": "为 DeepSeek Harness 接入 OpenCode Console (Zen) 模型：在「设置 → 插件」中填入 Console API Key 后即可选用 Console 的对话模型，模型目录自动同步。"
+  }
+}

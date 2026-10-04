@@ -1,0 +1,6 @@
+{
+  "meta": {
+    "title": "OpenCode Zen",
+    "description": "OpenCode Console (Zen) models for DeepSeek Harness (DSH): fill in your Console API key under Settings → Plugins and the Console's chat models become selectable."
+  }
+}

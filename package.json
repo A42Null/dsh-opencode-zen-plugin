@@ -1,9 +1,10 @@
 {
   "name": "dsh-opencode-zen-plugin",
-  "version": "0.3.3",
+  "version": "0.3.4",
   "description": "OpenCode Console (Zen) models for DeepSeek Harness (DSH): fill in your Console API key under Settings → Plugins and the Console's chat models become selectable.",
   "type": "module",
   "main": "lib/index.js",
+  "readmeFilename": "README.zh-CN.md",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/A42Null/dsh-opencode-zen-plugin.git"
@@ -16,10 +17,13 @@
     ".": "./lib/index.js",
     "./client": "./lib/client.js",
     "./cordis.patch.yml": "./cordis.patch.yml",
+    "./locale/en.json": "./locale/en.json",
+    "./locale/zh.json": "./locale/zh.json",
     "./package.json": "./package.json"
   },
   "files": [
     "lib",
+    "locale",
     "cordis.patch.yml",
     "README.md",
     "README.zh-CN.md"
