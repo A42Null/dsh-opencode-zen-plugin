@@ -1,4 +1,4 @@
-# dsh-opencode-zen-plugin
+# @a42null/dsh-opencode-zen-plugin
 
 [English](./README.md) | **简体中文**
 
@@ -6,7 +6,7 @@ DeepSeek Harness 插件：自动适配 [OpenCode Console (Zen) 模型目录](htt
 
 - GitHub：<https://github.com/A42Null/dsh-opencode-zen-plugin>
 - CNB 制品库：<https://cnb.cool/A42Null/dsh-opencode-zen-plugin>
-- npm 包名：`dsh-opencode-zen-plugin`（已发布到 npmjs；安装方式见下文）
+- npm 包名：`@a42null/dsh-opencode-zen-plugin`（已发布到 npmjs；安装方式见下文）
 
 **只需在「设置 → 插件」粘贴 OpenCode Console 的 API Key，即可在 DSH 中选用 Console 提供的对话模型** —— 模型列表、上下文窗口、端点路由、推理参数自动完成。
 
@@ -36,10 +36,10 @@ DeepSeek Harness 插件：自动适配 [OpenCode Console (Zen) 模型目录](htt
 ### 方式一：从 npmjs 安装（推荐）
 
 ```bash
-dsh plugin add dsh-opencode-zen-plugin
+dsh plugin add @a42null/dsh-opencode-zen-plugin
 ```
 
-包页面：<https://www.npmjs.com/package/dsh-opencode-zen-plugin>
+包页面：<https://www.npmjs.com/package/@a42null/dsh-opencode-zen-plugin>
 
 ### 方式二：预构建 tarball（无需 git）
 
@@ -71,7 +71,19 @@ pnpm 会调用 `git ls-remote` 解析该仓库。若机器没装 git，会报
 
 ```bash
 npm config set registry https://npm.cnb.cool/A42Null/dsh-opencode-zen-plugin/-/packages/
-dsh plugin add dsh-opencode-zen-plugin
+dsh plugin add @a42null/dsh-opencode-zen-plugin
+```
+
+### 可选：GitHub Packages（同一包名，读取需令牌）
+
+同一个包也发布到 [GitHub Packages](https://github.com/A42Null/dsh-opencode-zen-plugin/pkgs/npm/dsh-opencode-zen-plugin)。
+
+GitHub 的 npm 注册表**读取包也需要令牌**（即使包是公开的），因此它更适合作为镜像/归档，而不是首选安装方式：
+
+```bash
+npm config set @a42null:registry https://npm.pkg.github.com
+npm config set //npm.pkg.github.com/:_authToken <GitHub 经典令牌，勾选 read:packages>
+dsh plugin add @a42null/dsh-opencode-zen-plugin
 ```
 
 注意这会把默认 registry 指向 CNB，用完请改回（例如 `npm config set registry https://registry.npmmirror.com`）。
@@ -141,7 +153,7 @@ git push origin main --follow-tags
 
 ### npmjs 认证：Trusted Publishing（推荐，无需长期令牌）
 
-在 <https://www.npmjs.com/package/dsh-opencode-zen-plugin> → `Settings → Trusted Publisher` 填写：
+在 <https://www.npmjs.com/package/@a42null/dsh-opencode-zen-plugin> → `Settings → Trusted Publisher` 填写：
 
 | 字段 | 值 |
 | --- | --- |

@@ -5,5 +5,5 @@
 # 如需覆盖选项，请在下方 config 对象中修改（见 lib/index.js 的 Config schema）。
 - insert:
     - id: opencode-zen
-      name: 'dsh-opencode-zen-plugin'
+      name: '@a42null/dsh-opencode-zen-plugin'
       config: {}

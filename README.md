@@ -1,4 +1,4 @@
-# dsh-opencode-zen-plugin
+# @a42null/dsh-opencode-zen-plugin
 
 **English** | [简体中文](./README.zh-CN.md)
 
@@ -6,7 +6,7 @@ DeepSeek Harness plugin that auto-adapts the [OpenCode Console (Zen) model catal
 
 - GitHub: <https://github.com/A42Null/dsh-opencode-zen-plugin>
 - CNB package registry: <https://cnb.cool/A42Null/dsh-opencode-zen-plugin>
-- npm package: `dsh-opencode-zen-plugin` (published on npmjs; see Install below)
+- npm package: `@a42null/dsh-opencode-zen-plugin` (published on npmjs; see Install below)
 
 **Paste an OpenCode Console API Key under Settings → Plugins and the Console's chat models become selectable in DSH.** Model list, context windows, endpoint routing, and reasoning parameters are handled automatically.
 
@@ -36,10 +36,10 @@ What it does not do: it cannot make `*-free` models work (they only run inside t
 ### Option 1 — install from npmjs (recommended)
 
 ```bash
-dsh plugin add dsh-opencode-zen-plugin
+dsh plugin add @a42null/dsh-opencode-zen-plugin
 ```
 
-Package page: <https://www.npmjs.com/package/dsh-opencode-zen-plugin>
+Package page: <https://www.npmjs.com/package/@a42null/dsh-opencode-zen-plugin>
 
 ### Option 2 — prebuilt tarball (no git needed)
 
@@ -71,7 +71,19 @@ The same package is also published to the CNB registry <https://cnb.cool/A42Null
 
 ```bash
 npm config set registry https://npm.cnb.cool/A42Null/dsh-opencode-zen-plugin/-/packages/
-dsh plugin add dsh-opencode-zen-plugin
+dsh plugin add @a42null/dsh-opencode-zen-plugin
+```
+
+### Optional — GitHub Packages (same name, token required to read)
+
+The same package is also published to [GitHub Packages](https://github.com/A42Null/dsh-opencode-zen-plugin/pkgs/npm/dsh-opencode-zen-plugin).
+
+GitHub's npm registry requires a token **even to read** a public package — so treat it as a mirror/archive rather than the primary install route:
+
+```bash
+npm config set @a42null:registry https://npm.pkg.github.com
+npm config set //npm.pkg.github.com/:_authToken <GitHub classic token with read:packages>
+dsh plugin add @a42null/dsh-opencode-zen-plugin
 ```
 
 That points your default registry at CNB, so switch it back afterwards (e.g. `npm config set registry https://registry.npmmirror.com`).
@@ -141,7 +153,7 @@ Both registries are **idempotent**: an existing version is skipped, so re-pushin
 
 ### npmjs auth: Trusted Publishing (recommended, no long-lived token)
 
-On <https://www.npmjs.com/package/dsh-opencode-zen-plugin> → `Settings → Trusted Publisher`:
+On <https://www.npmjs.com/package/@a42null/dsh-opencode-zen-plugin> → `Settings → Trusted Publisher`:
 
 | Field | Value |
 | --- | --- |

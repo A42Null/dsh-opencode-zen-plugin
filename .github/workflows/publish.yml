@@ -36,6 +36,7 @@ on:
 permissions:
   contents: read
   id-token: write # npm Trusted Publishing（OIDC）需要
+  packages: write # GitHub Packages（npm.pkg.github.com）需要
 
 concurrency:
   group: publish-${{ github.ref }}
@@ -43,7 +44,7 @@ concurrency:
 
 jobs:
   publish:
-    name: publish to npmjs and CNB
+    name: publish to npmjs, CNB and GitHub Packages
     runs-on: ubuntu-latest
     # 令牌只从名为 cnb 的 Environment secrets 读取
     environment: cnb
@@ -51,6 +52,8 @@ jobs:
       CNB_REGISTRY: https://npm.cnb.cool/A42Null/dsh-opencode-zen-plugin/-/packages/
       CNB_USERNAME: cnb
       NPM_REGISTRY: https://registry.npmjs.org
+      GH_PACKAGES_REGISTRY: https://npm.pkg.github.com
+      GH_SCOPE: "@a42null"
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -103,7 +106,11 @@ jobs:
           # CNB 用 Basic 认证：_auth = base64("<用户名>:<访问令牌>")，而非 npm 默认的 _authToken
           auth="$(CNB_TOKEN="$token" node -e "process.stdout.write(Buffer.from(process.env.CNB_USERNAME + ':' + process.env.CNB_TOKEN).toString('base64'))")"
           echo "::add-mask::$auth"
+          # 包名带作用域：作用域映射与凭据写进一份全新的 .npmrc（后续注册表步骤各自重写它，
+          # 避免 scoped 包被别的注册表的作用域映射劫持）
+          rm -f "$HOME/.npmrc"
           printf '//npm.cnb.cool/A42Null/dsh-opencode-zen-plugin/-/packages/:_auth=%s\n' "$auth" >> "$HOME/.npmrc"
+          printf '%s:registry=%s\n' "$GH_SCOPE" "$CNB_REGISTRY" >> "$HOME/.npmrc"
           chmod 600 "$HOME/.npmrc"
           echo "已配置 CNB 凭据（令牌来自 Environment secret，未写入仓库）"
 
@@ -130,9 +137,13 @@ jobs:
 
       - name: Publish to npmjs (trusted publishing / OIDC, idempotent)
         id: npm_oidc
+        # always(): 前面的 CNB 步骤失败也不该连累 npmjs——各注册表互不阻塞，末尾统一校验
+        if: always()
         continue-on-error: true
         run: |
           set -euo pipefail
+          # 清掉前面注册表写入的作用域映射，避免带作用域的包被发到 CNB；OIDC 本身不需要任何凭据
+          rm -f "$HOME/.npmrc"
           name="$(node -p "require('./package.json').name")"
           version="$(node -p "require('./package.json').version")"
           if npm view "$name@$version" version --registry "$NPM_REGISTRY" >/dev/null 2>&1; then
@@ -156,6 +167,7 @@ jobs:
         if: always()
         run: |
           set -euo pipefail
+          rm -f "$HOME/.npmrc"
           name="$(node -p "require('./package.json').name")"
           version="$(node -p "require('./package.json').version")"
           # 刚发布的版本在 npm 上可能处于 "being processed" 状态，需要给它一点时间
@@ -170,6 +182,29 @@ jobs:
           echo "::error::npmjs 上仍不存在 $name@$version —— 发布未成功"
           exit 1
 
+      - name: Publish to GitHub Packages (idempotent)
+        if: always()
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          name="$(node -p "require('./package.json').name")"
+          version="$(node -p "require('./package.json').version")"
+          if [ -z "${NODE_AUTH_TOKEN:-}" ]; then
+            echo "::error::缺少 GITHUB_TOKEN —— 本工作流声明了 permissions: packages: write，但令牌为空"
+            exit 1
+          fi
+          # 包名已带作用域（@a42null/...），只需做作用域映射并写入 GITHUB_TOKEN
+          rm -f "$HOME/.npmrc"
+          printf '%s:registry=%s\n//npm.pkg.github.com/:_authToken=%s\n' "$GH_SCOPE" "$GH_PACKAGES_REGISTRY" "$NODE_AUTH_TOKEN" >> "$HOME/.npmrc"
+          chmod 600 "$HOME/.npmrc"
+          if npm view "$name@$version" version --registry "$GH_PACKAGES_REGISTRY" >/dev/null 2>&1; then
+            echo "::notice::$name@$version 已存在于 GitHub Packages，跳过发布"
+            exit 0
+          fi
+          npm publish --registry "$GH_PACKAGES_REGISTRY"
+          echo "::notice::已发布 $name@$version 到 GitHub Packages"
+
       - name: Summary
         if: always()
         run: |
@@ -180,4 +215,5 @@ jobs:
             echo ""
             echo "- npmjs: https://www.npmjs.com/package/$name"
             echo "- CNB: $CNB_REGISTRY"
+            echo "- GitHub Packages: https://github.com/A42Null/dsh-opencode-zen-plugin/pkgs/npm/dsh-opencode-zen-plugin"
           } >> "$GITHUB_STEP_SUMMARY"
