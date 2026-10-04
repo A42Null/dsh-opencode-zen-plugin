@@ -1,11 +1,12 @@
-# 发布 dsh-opencode-zen-plugin 到 npmjs 与 CNB 制品库（两个注册表都发，且都是幂等的）
+# 发布 @a42null/dsh-opencode-zen-plugin 到 npmjs、CNB 制品库与 GitHub Packages
+# （三处都发、各自幂等、互不阻塞：任一注册表失败不影响另外两个）
 #
 # 触发方式
 #   1) 推送版本标签：git tag vX.Y.Z && git push origin vX.Y.Z
 #   2) 手动触发（Actions → publish → Run workflow）；手动触发时，已存在的版本会被跳过
 #
 # npmjs 认证：使用 npm 官方的 Trusted Publishing（OIDC），**不需要任何长期令牌**。
-#   配置位置：https://www.npmjs.com/package/dsh-opencode-zen-plugin → Settings → Trusted Publisher
+#   配置位置：https://www.npmjs.com/package/@a42null/dsh-opencode-zen-plugin → Settings → Trusted Publisher
 #     Publisher:      GitHub Actions
 #     Organization:   A42Null
 #     Repository:     dsh-opencode-zen-plugin

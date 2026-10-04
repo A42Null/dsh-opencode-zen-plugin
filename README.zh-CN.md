@@ -67,10 +67,10 @@ pnpm 会调用 `git ls-remote` 解析该仓库。若机器没装 git，会报
 
 ### 可选：CNB 镜像源
 
-同一个包也发布在 CNB 制品库 <https://cnb.cool/A42Null/dsh-opencode-zen-plugin>。需要改用它时：
+同一个包也发布在 CNB 制品库 <https://cnb.cool/A42Null/dsh-opencode-zen-plugin>。包名带作用域，因此要把**该作用域**指向 CNB（不要去改默认源，否则会影响其他包）：
 
 ```bash
-npm config set registry https://npm.cnb.cool/A42Null/dsh-opencode-zen-plugin/-/packages/
+npm config set @a42null:registry https://npm.cnb.cool/A42Null/dsh-opencode-zen-plugin/-/packages/
 dsh plugin add @a42null/dsh-opencode-zen-plugin
 ```
 
@@ -86,7 +86,7 @@ npm config set //npm.pkg.github.com/:_authToken <GitHub 经典令牌，勾选 re
 dsh plugin add @a42null/dsh-opencode-zen-plugin
 ```
 
-注意这会把默认 registry 指向 CNB，用完请改回（例如 `npm config set registry https://registry.npmmirror.com`）。
+两种镜像都只改 `@a42null/*` 的去向，其他包仍走你的默认源；想撤销用 `npm config delete @a42null:registry`。
 
 ### 通用
 
@@ -126,7 +126,7 @@ dsh plugin add @a42null/dsh-opencode-zen-plugin
 
 | 现象 | 处理 |
 | --- | --- |
-| 安装失败：`git ls-remote` / `'git' 不是内部或外部命令` | 该机器没装 git，而 `github:` 源码安装需要它 → 改用方式一（预构建 tarball）或方式二（CNB 制品库），或先安装 Git for Windows |
+| 安装失败：`git ls-remote` / `'git' 不是内部或外部命令` | 该机器没装 git，而 `github:` 源码安装需要它 → 改用方式一（npmjs）或方式二（预构建 tarball），或先安装 Git for Windows |
 | AUTH 错误 | 未填 API Key 或 Key 无效 → 在「设置 → 插件 → OpenCode Zen → 配置」粘贴；模型列表无需鉴权，故 Key 缺失时仍能看到模型 |
 | FREE_TIER_BLOCKED（403 FreeTierError） | 选了 `*-free` 免费模型。免费层只能在 OpenCode 客户端内使用 → 关闭"包含免费模型"或改用付费模型 |
 | QUOTA（402 Insufficient account funds） | Key 有效但 Console 账户余额不足 → 到 https://opencode.ai/console 充值 |
@@ -137,10 +137,13 @@ dsh plugin add @a42null/dsh-opencode-zen-plugin
 | CONTEXT_WINDOW_EXCEEDED | 输入超出模型上下文窗口 → 缩短会话或换更大窗口的模型 |
 | 模型列表为空或陈旧 | live 列表失败时自动回退内置静态目录；检查 `adapter-status.json` |
 | `jev-*` 报 INVALID_REQUEST | 该系列走 SystemOne 专用端点，不支持对话，已从目录排除 |
+| 升级到带作用域包名后「配置」入口消失 / API Key 读不到 | profile 覆盖补丁 `~/.dsh/profiles/desktop/cordis.patch.yml` 里的 `name` 仍是旧名 → 改为 `@a42null/dsh-opencode-zen-plugin` 后重启 DSH（API Key 会保留） |
+| 启动失败：`client-modules: duplicate factory registration` / `1 entry did not activate` | 0.3.5 的客户端模块 id 与包名不一致（改名遗留）→ 升级到 **0.3.6 及以上**；应急恢复可用启动失败对话框里的「禁用第三方插件、备份 profile patch 并重启」 |
+| 卸载/更新报 `ERR_PNPM_TARBALL_URL_MISMATCH` | 锁文件记录的 tarball 源与当前生效源不一致 → 固定该作用域的源：`npm config set @a42null:registry https://registry.npmjs.org` |
 
 ## 发布（维护者）
 
-推送与 `package.json` 中 `version` 一致的标签，即自动发布到 **npmjs 与 CNB 制品库**（工作流 [`.github/workflows/publish.yml`](.github/workflows/publish.yml)）：
+推送与 `package.json` 中 `version` 一致的标签，即自动发布到 **npmjs、CNB 制品库与 GitHub Packages**（工作流 [`.github/workflows/publish.yml`](.github/workflows/publish.yml)）：
 
 ```bash
 npm version patch --no-git-tag-version   # 或手动修改 package.json 的 version
@@ -149,7 +152,7 @@ git tag vX.Y.Z
 git push origin main --follow-tags
 ```
 
-两个注册表都是**幂等**的：目标上已存在同版本即跳过，因此重复推送标签不会失败；任务末尾还会校验 npmjs 上确实存在该版本。
+三个注册表都是**幂等**的（目标上已存在同版本即跳过，重复推标签不会失败），并且**互不阻塞**：任一注册表失败不影响另外两个；任务末尾还会校验 npmjs 上确实存在该版本。
 
 ### npmjs 认证：Trusted Publishing（推荐，无需长期令牌）
 
@@ -172,8 +175,9 @@ git push origin main --follow-tags
 | Secret 名 | 必填 | 说明 |
 | --- | --- | --- |
 | `CNB_TOKEN` | 是 | CNB 访问令牌（生成时需勾选「制品库」权限） |
+| `GH_TOKEN` | 否（推荐） | GitHub 经典令牌/PAT（勾选 `write:packages`），用于发布到 GitHub Packages；未配置时回落到内置 `GITHUB_TOKEN`（此时仓库的 Actions 工作流权限需为读写） |
 
-**npmjs 不需要任何密钥**（走 OIDC 可信发布；若 OIDC 失败，任务会打印配置检查清单并失败）。CNB 的 npm 用户名固定为 `cnb`（如需不同可改工作流的 `CNB_USERNAME`）。标签版本与 `package.json` 不一致时任务会直接失败，避免发错版本。
+**npmjs 不需要任何密钥**（走 OIDC 可信发布；若 OIDC 失败，任务会打印配置检查清单并失败）。三个注册表**各自独立且幂等**：任一失败不影响其余两个。CNB 的 npm 用户名固定为 `cnb`（如需不同可改工作流的 `CNB_USERNAME`）。标签版本与 `package.json` 不一致时任务会直接失败，避免发错版本。
 
 ## 文档
 

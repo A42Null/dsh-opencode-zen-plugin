@@ -67,10 +67,10 @@ use option 1 or 2 instead, or install [Git for Windows](https://git-scm.com/down
 
 ### Optional — CNB mirror
 
-The same package is also published to the CNB registry <https://cnb.cool/A42Null/dsh-opencode-zen-plugin>:
+The same package is also published to the CNB registry <https://cnb.cool/A42Null/dsh-opencode-zen-plugin>. The name is scoped, so point **that scope** at CNB (don't change the default registry — that would affect every other package):
 
 ```bash
-npm config set registry https://npm.cnb.cool/A42Null/dsh-opencode-zen-plugin/-/packages/
+npm config set @a42null:registry https://npm.cnb.cool/A42Null/dsh-opencode-zen-plugin/-/packages/
 dsh plugin add @a42null/dsh-opencode-zen-plugin
 ```
 
@@ -86,7 +86,7 @@ npm config set //npm.pkg.github.com/:_authToken <GitHub classic token with read:
 dsh plugin add @a42null/dsh-opencode-zen-plugin
 ```
 
-That points your default registry at CNB, so switch it back afterwards (e.g. `npm config set registry https://registry.npmmirror.com`).
+Both mirrors only redirect `@a42null/*`; every other package keeps using your default registry. Undo with `npm config delete @a42null:registry`.
 
 ### Then
 
@@ -126,7 +126,7 @@ All endpoints use `Authorization: Bearer <apiKey>`; Anthropic endpoints also sen
 
 | Symptom | Action |
 | --- | --- |
-| Install fails with `git ls-remote` / `'git' is not recognized` | The machine has no git, and `github:` source installs need it → use option 1 (prebuilt tarball) or option 2 (CNB registry), or install Git for Windows first |
+| Install fails with `git ls-remote` / `'git' is not recognized` | The machine has no git, and `github:` source installs need it → use option 1 (npmjs) or option 2 (prebuilt tarball), or install Git for Windows first |
 | AUTH error | Missing or invalid API Key → paste one under Settings → Plugins → OpenCode Zen → Configure; the model list needs no auth, so models stay visible without a key |
 | FREE_TIER_BLOCKED (403 FreeTierError) | A `*-free` model was selected; the free tier only works inside the OpenCode client → disable "include free models" or use a paid model |
 | QUOTA (402 Insufficient account funds) | The key is valid but the Console balance is empty → top up at https://opencode.ai/console |
@@ -137,10 +137,13 @@ All endpoints use `Authorization: Bearer <apiKey>`; Anthropic endpoints also sen
 | CONTEXT_WINDOW_EXCEEDED | Input exceeded the model's context window → shorten the session or pick a larger-window model |
 | Empty or stale model list | Live-list failures fall back to the embedded static catalog; inspect `adapter-status.json` |
 | `jev-*` reports INVALID_REQUEST | That family uses the SystemOne endpoint and is not chat-capable; excluded from the catalog |
+| After upgrading to the scoped name: the Configure entry disappears / the API key reads as empty | The overlay row in `~/.dsh/profiles/desktop/cordis.patch.yml` still names the old package → set its `name` to `@a42null/dsh-opencode-zen-plugin` and restart DSH (the API key is preserved) |
+| Startup fails with `client-modules: duplicate factory registration` / `1 entry did not activate` | 0.3.5 shipped a client module id that no longer matched the package name → upgrade to **0.3.6 or newer**; the boot-failure dialog's "disable third-party plugins, back up the profile patch and restart" button is the emergency recovery |
+| Uninstall/update fails with `ERR_PNPM_TARBALL_URL_MISMATCH` | The lockfile's tarball source differs from the active registry → pin the scope: `npm config set @a42null:registry https://registry.npmjs.org` |
 
 ## Releasing (maintainers)
 
-Push a tag that matches the `version` in `package.json` and the package is published to **npmjs and the CNB registry** automatically (workflow [`.github/workflows/publish.yml`](.github/workflows/publish.yml)):
+Push a tag that matches the `version` in `package.json` and the package is published to **npmjs, the CNB registry and GitHub Packages** automatically (workflow [`.github/workflows/publish.yml`](.github/workflows/publish.yml)):
 
 ```bash
 npm version patch --no-git-tag-version   # or edit version in package.json manually
@@ -149,7 +152,7 @@ git tag vX.Y.Z
 git push origin main --follow-tags
 ```
 
-Both registries are **idempotent**: an existing version is skipped, so re-pushing a tag never fails, and the job verifies at the end that the version really is on npmjs.
+All three registries are **idempotent** (an existing version is skipped, so re-pushing a tag never fails) and **independent**: one registry failing does not block the other two. The job verifies at the end that the version really is on npmjs.
 
 ### npmjs auth: Trusted Publishing (recommended, no long-lived token)
 
@@ -172,8 +175,9 @@ CI then exchanges an OIDC token for publish credentials — no token needed (the
 | Secret | Required | Notes |
 | --- | --- | --- |
 | `CNB_TOKEN` | yes | CNB access token (enable the package-registry scope when creating it) |
+| `GH_TOKEN` | no (recommended) | GitHub classic token / PAT with `write:packages`, used to publish to GitHub Packages; when absent the built-in `GITHUB_TOKEN` is used (the repository's Actions workflow permissions must then be read/write) |
 
-**npmjs needs no secret at all** (it uses OIDC trusted publishing; if the OIDC exchange fails the job prints a configuration checklist and fails). The CNB npm username is always `cnb` (change `CNB_USERNAME` in the workflow if yours differs). A tag that does not match `package.json` fails the job, so a wrong version can never be published.
+**npmjs needs no secret at all** (it uses OIDC trusted publishing; if the OIDC exchange fails the job prints a configuration checklist and fails). The three registries are **independent and idempotent**: one failing does not block the other two. The CNB npm username is always `cnb` (change `CNB_USERNAME` in the workflow if yours differs). A tag that does not match `package.json` fails the job, so a wrong version can never be published.
 
 ## Docs
 
