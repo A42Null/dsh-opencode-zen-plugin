@@ -185,7 +185,8 @@ jobs:
       - name: Publish to GitHub Packages (idempotent)
         if: always()
         env:
-          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # 优先用 Environment 里的 GH_TOKEN（经典令牌，权限更稳），未配置时回落内置 GITHUB_TOKEN
+          NODE_AUTH_TOKEN: ${{ secrets.GH_TOKEN || secrets.GITHUB_TOKEN }}
         run: |
           set -euo pipefail
           name="$(node -p "require('./package.json').name")"
